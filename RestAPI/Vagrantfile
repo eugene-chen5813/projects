@@ -25,6 +25,7 @@ echo "Installs tools"
 yum install -y wget
 yum install -y net-tools
 yum isntall -y git
+yum install -y npm
 
 ##############################
 # Jenkins
@@ -36,12 +37,6 @@ yum install -y jenkins
 yum install -y java-1.8.0-openjdk.x86_64
 systemctl enable jenkins
 systemctl start jenkins
-
-##############################
-# Installing node.js in Docker
-##############################
-#echo "Dockerizing node.js API"
-#cp ./Dockerfile 
 HEREDOC
 
 Vagrant.configure("2") do |config|
