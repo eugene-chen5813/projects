@@ -24,6 +24,7 @@ docker-compose version
 echo "Installs tools"
 yum install -y wget
 yum install -y net-tools
+yum isntall -y git
 
 ##############################
 # Jenkins
