@@ -1,0 +1,19 @@
+Purpose: Fictional REST API application to be deployed with the tools below
+
+1) Vagrant: Deploys applications 
+	- Vagrantfile (Skeleton in repo)
+	> BASE = bash script to install apps
+		- For Docker & Jenkins modules
+
+2) Jenkins
+	- Deploys Docker+node.js
+
+3) Docker
+	- Dockerfile
+		Includes node.js packages for containerization
+
+
+4) node.js (Runs on port 3000)
+	- API > "Hello World"
+	- Includes package.json
+	- server.js
