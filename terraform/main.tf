@@ -4,22 +4,77 @@ provider "aws" {
   profile = "${var.profile}"
 }
 
-#Sets up VPC
+##Sets up VPC
+#resource "aws_vpc" "terra_vpc" {
+# cidr_block           = "${var.vpc_cidr}"
+# enable_dns_hostnames = true
+# tags = {
+#    Name = "terra_vpc"
+#  }
+#}
+
+#Creates subnet for VPC
+#resource "aws_subnet" "terra_subnet" {
+#  vpc_id            = "${aws_vpc.terra_vpc.id}"
+# cidr_block        = "${var.vpc_cidr}"
+# availability_zone = "${var.availability_zone}"
+# tags = {
+#    Name = "terra_subs"
+#  }
+#}
+
+# Internet VPC
 resource "aws_vpc" "terra_vpc" {
-  cidr_block           = "${var.vpc_cidr}"
-  enable_dns_hostnames = true
+  cidr_block           = "10.0.0.0/16"
+  instance_tenancy     = "default"
+  enable_dns_support   = "true"
+  enable_dns_hostnames = "true"
+  enable_classiclink   = "false"
+
   tags = {
     Name = "terra_vpc"
   }
 }
 
-#Creates subnet for VPC
-resource "aws_subnet" "terra_subnet" {
-  vpc_id            = "${aws_vpc.terra_vpc.id}"
-  cidr_block        = "${var.vpc_cidr}"
-  availability_zone = "${var.availability_zone}"
+# Private and Public Subnets
+resource "aws_subnet" "terra_public_1" {
+  vpc_id                  = "${aws_vpc.terra_vpc.id}"
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = "true"
+  availability_zone       = "us-west-1b"
+
   tags = {
-    Name = "terra_subs"
+    Name = "terra_public_1"
+  }
+}
+resource "aws_subnet" "terra_public_2" {
+  vpc_id                  = "${aws_vpc.terra_vpc.id}"
+  cidr_block              = "10.0.2.0/24"
+  map_public_ip_on_launch = "true"
+  availability_zone       = "us-west-1c"
+
+  tags = {
+    Name = "terra_public_2"
+  }
+}
+resource "aws_subnet" "terra_private_1" {
+  vpc_id                  = "${aws_vpc.terra_vpc.id}"
+  cidr_block              = "10.0.3.0/24"
+  map_public_ip_on_launch = "false"
+  availability_zone       = "us-west-1b"
+
+  tags = {
+    Name = "terra_private_1"
+  }
+}
+resource "aws_subnet" "terra_private_2" {
+  vpc_id                  = "${aws_vpc.terra_vpc.id}"
+  cidr_block              = "10.0.4.0/24"
+  map_public_ip_on_launch = "false"
+  availability_zone       = "us-west-1c"
+
+  tags = {
+    Name = "terra_private_2"
   }
 }
 
@@ -36,7 +91,7 @@ resource "aws_route_table" "terra_rt" {
   vpc_id = "${aws_vpc.terra_vpc.id}"
 
   route {
-    cidr_block = "208.98.205.74/32"
+    cidr_block = "0.0.0.0/0"
     gateway_id = "${aws_internet_gateway.terra_gw.id}"
   }
 
@@ -47,7 +102,7 @@ resource "aws_route_table" "terra_rt" {
 
 # Creates routing table association
 resource "aws_route_table_association" "web-public-rt" {
-  subnet_id      = "${aws_subnet.terra_subnet.id}"
+  subnet_id      = "${aws_subnet.terra_public_1.id}"
   route_table_id = "${aws_route_table.terra_rt.id}"
 }
 
@@ -80,12 +135,36 @@ resource "aws_security_group" "terra_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["208.98.205.74/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
   vpc_id = "${aws_vpc.terra_vpc.id}"
 
   tags = {
     Name = "terra_sg"
+  }
+}
+
+# Creates MS SQL Security Group
+
+resource "aws_security_group" "allow_mssql" {
+  vpc_id      = "${aws_vpc.terra_vpc.id}"
+  name        = "allow_mssql"
+  description = "Allows MS SQL"
+  ingress {
+    from_port       = 1433
+    to_port         = 1433
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.terra_sg.id}"] # allowing access from our example instance
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    self        = true
+  }
+  tags = {
+    Name = "allow_mssql"
   }
 }
 
@@ -100,7 +179,7 @@ resource "aws_instance" "terra_ec2" {
   ami                    = "${var.ami}"
   instance_type          = "${var.instance_type}"
   key_name               = "${aws_key_pair.terra_vpc.id}"
-  subnet_id              = "${aws_subnet.terra_subnet.id}"
+  subnet_id              = "${aws_subnet.terra_public_1.id}"
   vpc_security_group_ids = ["${aws_security_group.terra_sg.id}"]
   #security_groups = ["${aws_security_group.terra_sg.Name}"]
   associate_public_ip_address = true
