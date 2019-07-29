@@ -13,7 +13,7 @@ resource "aws_vpc" "terra_vpc" {
   }
 }
 
-#Creates a subnet for VPC
+#Creates subnet for VPC
 resource "aws_subnet" "terra_subnet" {
   vpc_id            = "${aws_vpc.terra_vpc.id}"
   cidr_block        = "${var.vpc_cidr}"
@@ -111,21 +111,4 @@ resource "aws_instance" "terra_ec2" {
   tags = {
     Name = "terra_ec2_test"
   }
-}
-
-# Creating MS SQL Database Instance
-resource "aws_db_instance" "terra_database" {
-  allocated_storage = 20
-  #availability_zone      = 
-  storage_type           = "standard"
-  engine                 = "sqlserver-se"
-  engine_version         = "14.0"
-  port                   = "1433"
-  instance_class         = "db.t2.micro"
-  name                   = "Test_MSSQL_DB"
-  username               = "data"
-  password               = "testdatabase"
-  vpc_security_group_ids = ["${aws_security_group.terra_sg.id}"]
-  #aws_db_subnet_group_name = "aws_terradb_subnet"
-  parameter_group_name = "default.mssql14.0"
 }
