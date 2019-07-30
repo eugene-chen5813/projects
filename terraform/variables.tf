@@ -18,6 +18,11 @@ variable "instance_type" {
   default = "t2.micro"
 }
 
+variable "instance_count" {
+  default = "2" # For the number of instances you want. You would need: count = "${var.instance.count}" in the resource
+}
+
+
 variable "public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }

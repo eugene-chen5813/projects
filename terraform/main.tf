@@ -4,24 +4,6 @@ provider "aws" {
   profile = "${var.profile}"
 }
 
-##Sets up VPC
-#resource "aws_vpc" "terra_vpc" {
-# cidr_block           = "${var.vpc_cidr}"
-# enable_dns_hostnames = true
-# tags = {
-#    Name = "terra_vpc"
-#  }
-#}
-
-#Creates subnet for VPC
-#resource "aws_subnet" "terra_subnet" {
-#  vpc_id            = "${aws_vpc.terra_vpc.id}"
-# cidr_block        = "${var.vpc_cidr}"
-# availability_zone = "${var.availability_zone}"
-# tags = {
-#    Name = "terra_subs"
-#  }
-#}
 
 # Internet VPC
 resource "aws_vpc" "terra_vpc" {
@@ -145,11 +127,11 @@ resource "aws_security_group" "terra_sg" {
 }
 
 # Creates MS SQL Security Group
-
 resource "aws_security_group" "allow_mssql" {
   vpc_id      = "${aws_vpc.terra_vpc.id}"
   name        = "allow_mssql"
   description = "Allows MS SQL"
+
   ingress {
     from_port       = 1433
     to_port         = 1433
@@ -165,6 +147,30 @@ resource "aws_security_group" "allow_mssql" {
   }
   tags = {
     Name = "allow_mssql"
+  }
+}
+
+# Creates an Oracle Security Group
+resource "aws_security_group" "allow_oracle" {
+  vpc_id      = "${aws_vpc.terra_vpc.id}"
+  name        = "allow_oracle"
+  description = "Allows Oracle"
+
+  ingress {
+    from_port       = 1521
+    to_port         = 1521
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.terra_sg.id}"] # allowing access from our example instance
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    self        = true
+  }
+  tags = {
+    Name = "allow_oracle"
   }
 }
 
